@@ -11,11 +11,13 @@ def rows(real_scores, ai_scores):
 
 
 class DetectorCalibrationTests(unittest.TestCase):
-    def test_perfect_separation_selects_between_classes(self):
+    def test_perfect_separation_selects_threshold_with_perfect_metrics(self):
         calibration = rows([0.1, 0.2, 0.3], [0.7, 0.8, 0.9])
         selected = choose_threshold(calibration, "balanced_accuracy")
+        # The documented tie-break favors the higher threshold. Since scores
+        # equal to the threshold are classified as AI, 0.7 is a valid optimum.
         self.assertGreater(selected["threshold"], 0.3)
-        self.assertLess(selected["threshold"], 0.7)
+        self.assertLessEqual(selected["threshold"], 0.7)
         self.assertEqual(selected["calibration_metrics"]["balanced_accuracy"], 1.0)
 
     def test_reports_calibration_and_held_out_metrics_separately(self):
