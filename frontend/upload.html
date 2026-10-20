@@ -1,217 +1,106 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload - TruthLens</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Upload an image — TruthLens</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
-<body class="bg-[#09090B] text-white min-h-screen relative overflow-x-hidden">
-
-    <!-- Background Grid -->
-    <div class="absolute inset-0 opacity-10"
-        style="
-        background-image: linear-gradient(#2a2a2a 1px, transparent 1px),
-                          linear-gradient(to right, #2a2a2a 1px, transparent 1px);
-        background-size: 40px 40px;
-        z-index: 0;">
-    </div>
-
-    <!-- Background Glow -->
-    <div class="absolute top-[20%] left-[35%] w-[500px] h-[500px]
-    bg-purple-500 rounded-full blur-[180px] opacity-10 z-0">
-    </div>
-
-    <!-- Navbar -->
-    <nav class="relative z-10 px-16 py-8 flex items-center gap-6">
-        <a href="index.html" class="text-gray-400 hover:text-purple-400 transition">
-            ← Back
-        </a>
-
-        <h1 class="text-2xl font-bold text-purple-400
-        drop-shadow-[0_0_12px_rgba(168,85,247,0.6)]">
-            TruthLens
-        </h1>
-    </nav>
-
-    <!-- Heading -->
-    <section class="relative z-10 text-center mt-12">
-        <h2 class="text-4xl font-bold">
-            Upload image for analysis
-        </h2>
-
-        <p class="text-gray-500 mt-4">
-            Upload an image and let TruthLens verify authenticity.
-        </p>
-    </section>
-
-    <!-- Split Layout -->
-    <section class="relative z-10 flex justify-center gap-10 mt-14 px-10 flex-wrap">
-
-        <!-- Upload Card -->
-        <div class="w-[450px] h-[330px]
-        border-2 border-dashed border-gray-700 rounded-3xl
-        flex flex-col items-center justify-center
-        hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/10
-        transition duration-300 backdrop-blur-sm">
-
-            <div class="text-5xl mb-6">↑</div>
-
-            <p class="text-xl font-semibold">Drag image here</p>
-
-            <p class="text-gray-500 mt-3">PNG • JPG • WEBP</p>
-
-            <input type="file" id="fileInput" accept="image/*" class="hidden">
-
-            <button onclick="document.getElementById('fileInput').click()"
-            class="mt-8 border border-purple-500 px-6 py-3 rounded-xl
-            hover:shadow-lg hover:shadow-purple-500/20 transition">
-                Choose File
-            </button>
-
+<body class="min-h-screen bg-[#09090b] text-white">
+  <header class="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+    <a href="index.html" class="text-xl font-semibold tracking-tight text-violet-300">TruthLens</a>
+    <span class="text-sm text-zinc-500">Image validation preview</span>
+  </header>
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <p class="text-xs font-semibold uppercase tracking-[.22em] text-violet-300">Image workspace / 01</p>
+    <h1 class="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">Start with the original file.</h1>
+    <p class="mt-4 max-w-2xl leading-7 text-zinc-400">TruthLens currently validates image files and reports basic properties. AI-origin detection is not connected, so this version will not label an image real or AI-generated.</p>
+    <form id="uploadForm" class="mt-10 grid gap-8 md:grid-cols-[1.1fr_.9fr]" novalidate>
+      <section class="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6">
+        <label for="fileInput" class="block text-sm font-medium text-zinc-200">Choose an image</label>
+        <p class="mt-2 text-sm text-zinc-500">PNG, JPG or WEBP · up to 10 MB</p>
+        <input id="fileInput" name="image" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" required class="mt-5 block w-full cursor-pointer rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-violet-300 file:px-4 file:py-2 file:font-semibold file:text-zinc-950">
+        <p id="fileError" class="mt-3 min-h-5 text-sm text-rose-300" role="alert"></p>
+        <button id="startBtn" type="submit" class="mt-5 w-full rounded-lg bg-violet-300 px-5 py-3 font-semibold text-zinc-950 transition hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-50">Validate image</button>
+        <p id="status" class="mt-4 text-sm text-zinc-400" role="status" aria-live="polite"></p>
+      </section>
+      <section class="min-h-72 overflow-hidden rounded-2xl border border-zinc-800 bg-[#0d0d11]">
+        <div class="flex items-center justify-between border-b border-zinc-800 px-5 py-4"><h2 class="text-sm font-medium">Local preview</h2><span id="previewMeta" class="text-xs text-zinc-500">No file selected</span></div>
+        <div class="flex min-h-64 items-center justify-center p-5">
+          <img id="previewImage" alt="Preview of selected image" class="hidden max-h-96 max-w-full rounded-md object-contain">
+          <p id="previewPlaceholder" class="text-sm text-zinc-600">Your image preview appears here.</p>
         </div>
-
-        <!-- Preview Card -->
-        <div class="w-[450px] h-[330px]
-        border border-gray-800 rounded-3xl
-        flex flex-col items-center justify-center
-        backdrop-blur-sm overflow-hidden">
-
-            <img id="previewImage"
-            class="hidden w-full h-full object-cover">
-
-            <div id="previewPlaceholder">
-
-                <div class="text-5xl mb-6 opacity-50">🖼</div>
-
-                <p class="text-xl font-semibold text-center">Preview</p>
-
-                <p class="text-gray-500 mt-3 text-center">
-                    No image selected
-                </p>
-
-            </div>
-
-        </div>
-
-    </section>
-
-    <!-- Bottom Button -->
-    <section class="relative z-10 flex justify-center mt-12">
-
-        <button id="startBtn"
-        disabled
-        class="px-10 py-4 rounded-2xl
-        border border-gray-700 text-gray-500 cursor-not-allowed">
-
-            Start Analysis
-
-        </button>
-
-    </section>
-
-
+      </section>
+    </form>
+    <p class="mt-8 max-w-3xl text-xs leading-5 text-zinc-600">Privacy note: the selected image is sent to the configured TruthLens backend for validation. Do not upload sensitive images to a server you do not control.</p>
+  </main>
 <script>
+(() => {
+  const form = document.getElementById('uploadForm');
+  const fileInput = document.getElementById('fileInput');
+  const previewImage = document.getElementById('previewImage');
+  const previewPlaceholder = document.getElementById('previewPlaceholder');
+  const previewMeta = document.getElementById('previewMeta');
+  const fileError = document.getElementById('fileError');
+  const status = document.getElementById('status');
+  const startBtn = document.getElementById('startBtn');
+  const maxBytes = 10 * 1024 * 1024;
+  const allowed = new Set(['image/png', 'image/jpeg', 'image/webp']);
+  let previewUrl = null;
 
-const fileInput = document.getElementById("fileInput");
-const previewImage = document.getElementById("previewImage");
-const previewPlaceholder = document.getElementById("previewPlaceholder");
-const startBtn = document.getElementById("startBtn");
-
-
-/* image preview */
-fileInput.addEventListener("change", function(){
-
-    const file = this.files[0];
-
-    if(file){
-
-        const reader = new FileReader();
-
-        reader.onload = function(e){
-
-            previewImage.src = e.target.result;
-            previewImage.classList.remove("hidden");
-            previewPlaceholder.style.display = "none";
-
-            startBtn.disabled = false;
-
-            startBtn.classList.remove(
-                "border-gray-700",
-                "text-gray-500",
-                "cursor-not-allowed"
-            );
-
-            startBtn.classList.add(
-                "border-purple-500",
-                "text-white"
-            );
-
-        };
-
-        reader.readAsDataURL(file);
+  fileInput.addEventListener('change', () => {
+    fileError.textContent = '';
+    status.textContent = '';
+    const file = fileInput.files && fileInput.files[0];
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
+    previewImage.classList.add('hidden');
+    previewPlaceholder.classList.remove('hidden');
+    previewMeta.textContent = 'No file selected';
+    if (!file) return;
+    if (!/\.(png|jpe?g|webp)$/i.test(file.name) || !allowed.has(file.type)) {
+      fileError.textContent = 'Choose a valid PNG, JPG or WEBP image.';
+      fileInput.value = '';
+      return;
     }
-
-});
-
-
-/* send to backend */
-startBtn.addEventListener("click", async function(){
-
-    const file = fileInput.files[0];
-
-    if(!file){
-        alert("Please select image");
-        return;
+    if (file.size > maxBytes) {
+      fileError.textContent = 'The file exceeds the 10 MB limit.';
+      fileInput.value = '';
+      return;
     }
+    previewUrl = URL.createObjectURL(file);
+    previewImage.src = previewUrl;
+    previewImage.classList.remove('hidden');
+    previewPlaceholder.classList.add('hidden');
+    previewMeta.textContent = (file.size / 1024).toFixed(1) + ' KB';
+  });
 
-    let formData = new FormData();
-    formData.append("image", file);
-
-    try{
-
-        /* loading state */
-        startBtn.innerText = "Analyzing...";
-        startBtn.disabled = true;
-
-        const response = await fetch("http://127.0.0.1:5000/analyze",{
-            method:"POST",
-            body:formData
-        });
-
-        const data = await response.json();
-
-        console.log(data);
-
-        /* save backend results */
-        localStorage.setItem("scanScore", data.score);
-        localStorage.setItem("scanVerdict", data.verdict);
-        localStorage.setItem("fileSize", data.file_size_kb);
-
-        /* save image */
-        localStorage.setItem("uploadedImage", previewImage.src);
-
-        /* go next */
-        window.location.href = "analyze.html";
-
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) { fileError.textContent = 'Choose an image first.'; return; }
+    if (file.size > maxBytes || !allowed.has(file.type)) { fileError.textContent = 'The selected file is not supported or exceeds 10 MB.'; return; }
+    startBtn.disabled = true;
+    startBtn.textContent = 'Validating…';
+    status.textContent = 'Sending image to the configured backend…';
+    fileError.textContent = '';
+    try {
+      const body = new FormData();
+      body.append('image', file, file.name);
+      const response = await fetch('http://127.0.0.1:5000/analyze', { method: 'POST', body });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Request failed (' + response.status + ').');
+      sessionStorage.setItem('truthlensResult', JSON.stringify(payload));
+      window.location.href = 'analyze.html';
+    } catch (error) {
+      status.textContent = error.message || 'Could not connect to the TruthLens backend.';
+    } finally {
+      startBtn.disabled = false;
+      startBtn.textContent = 'Validate image';
     }
-
-    catch(error){
-
-        alert("Backend connection failed");
-
-        startBtn.innerText = "Start Analysis";
-        startBtn.disabled = false;
-
-        console.log(error);
-
-    }
-
-});
-
+  });
+})();
 </script>
-
 </body>
 </html>
