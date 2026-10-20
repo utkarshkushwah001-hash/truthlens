@@ -1,182 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TruthLens Analysis</title>
-<script src="https://cdn.tailwindcss.com"></script>
-
-<style>
-body{
-    background:#07070a;
-    overflow:hidden;
-}
-
-/* grid background */
-.grid{
-    position:absolute;
-    inset:0;
-    opacity:.08;
-    background-image:
-    linear-gradient(#333 1px, transparent 1px),
-    linear-gradient(to right,#333 1px,transparent 1px);
-    background-size:40px 40px;
-}
-
-/* scan line */
-@keyframes scan{
-    0%{ top:0%; }
-    100%{ top:100%; }
-}
-
-.scan-line{
-    animation:scan 2.5s linear infinite alternate;
-}
-
-/* glow */
-.glow{
-    box-shadow:0 0 20px rgba(34,211,238,.7);
-}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Analysis status — TruthLens</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
-<body class="text-white relative">
-
-<!-- background -->
-<div class="grid"></div>
-
-<!-- glow -->
-<div class="absolute top-[20%] left-[35%]
-w-[500px] h-[500px]
-bg-purple-600 rounded-full blur-[180px] opacity-10">
-</div>
-
-<section class="relative z-10 min-h-screen
-flex flex-col justify-center items-center px-6">
-
-    <!-- heading -->
-    <p class="text-gray-400 tracking-widest text-sm mb-10">
-        TRUTHLENS ANALYZING
-    </p>
-
-    <!-- image box -->
-    <div class="relative w-[420px] h-[420px]
-    border border-gray-800 rounded-3xl
-    overflow-hidden">
-
-        <!-- uploaded image -->
-        <img
-        id="scanImage"
-        class="w-full h-full object-cover transition-all duration-300"
-        style="filter:blur(20px);">
-
-        <!-- scan beam -->
-        <div class="scan-line absolute left-0
-        w-full h-[4px]
-        bg-cyan-400 glow">
-        </div>
-
-    </div>
-
-    <!-- status -->
-    <p id="statusText"
-    class="mt-8 text-gray-400">
-
-        Reading metadata...
-
-    </p>
-
-    <!-- progress -->
-    <div class="w-[520px] mt-6">
-
-        <div class="bg-gray-800 h-3 rounded-full overflow-hidden">
-
-            <div id="progressBar"
-            class="bg-purple-500 h-full w-0 transition-all duration-300">
-            </div>
-
-        </div>
-
-        <p id="progressText"
-        class="text-center mt-3 text-purple-400">
-
-            0%
-
-        </p>
-
-    </div>
-
-</section>
-
+<body class="min-h-screen bg-[#09090b] text-white">
+  <main class="mx-auto max-w-3xl px-6 py-20">
+    <a href="index.html" class="text-xl font-semibold text-violet-300">TruthLens</a>
+    <p class="mt-12 text-xs font-semibold uppercase tracking-[.22em] text-violet-300">Image workspace / 02</p>
+    <h1 class="mt-4 text-4xl font-semibold">Validation response received</h1>
+    <p class="mt-4 leading-7 text-zinc-400">This page displays the backend response. It does not simulate AI detection or run a hidden analysis process.</p>
+    <section class="mt-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+      <p id="status" class="font-medium text-amber-200">Loading saved response…</p>
+      <p id="message" class="mt-3 text-sm leading-6 text-zinc-400"></p>
+      <button id="continueBtn" class="mt-6 rounded-lg bg-violet-300 px-5 py-3 font-semibold text-zinc-950">View result</button>
+    </section>
+  </main>
 <script>
-
-let progress = 0;
-
-const img = document.getElementById("scanImage");
-const bar = document.getElementById("progressBar");
-const txt = document.getElementById("progressText");
-const status = document.getElementById("statusText");
-
-/* get uploaded image */
-const uploadedImage = localStorage.getItem("uploadedImage");
-
-/* safety check */
-if(uploadedImage){
-    img.src = uploadedImage;
-}else{
-    alert("No image uploaded");
-    window.location.href = "upload.html";
-}
-
-/* status messages */
-const messages = [
-"Reading metadata...",
-"Checking image artifacts...",
-"Detecting synthetic patterns...",
-"Running AI verification...",
-"Finalizing analysis...",
-"Scan complete."
-];
-
-let msgIndex = 0;
-
-/* scan animation */
-const interval = setInterval(()=>{
-
-    progress++;
-
-    /* progress bar */
-    bar.style.width = progress + "%";
-    txt.innerText = progress + "%";
-
-    /* reduce blur */
-    let blur = 20 - (progress * 0.2);
-    img.style.filter = `blur(${blur}px)`;
-
-    /* change messages */
-    if(progress % 20 === 0 && msgIndex < messages.length - 1){
-        msgIndex++;
-        status.innerText = messages[msgIndex];
-    }
-
-    /* finished */
-    if(progress >= 100){
-
-        clearInterval(interval);
-
-        status.innerText = "SCAN COMPLETE";
-
-        setTimeout(()=>{
-
-            window.location.href = "result.html";
-
-        },1500);
-
-    }
-
-},100);
-
+(() => {
+  const status = document.getElementById('status');
+  const message = document.getElementById('message');
+  const raw = sessionStorage.getItem('truthlensResult');
+  if (!raw) {
+    status.textContent = 'No validation response found';
+    message.textContent = 'Return to the upload page and validate an image first.';
+    document.getElementById('continueBtn').textContent = 'Back to upload';
+    document.getElementById('continueBtn').onclick = () => window.location.href = 'upload.html';
+    return;
+  }
+  try {
+    const result = JSON.parse(raw);
+    status.textContent = result.verdict || result.status || 'Inconclusive';
+    message.textContent = result.message || 'The backend returned a response without a message.';
+  } catch (_) {
+    status.textContent = 'Could not read the response';
+    message.textContent = 'Return to the upload page and try again.';
+  }
+  document.getElementById('continueBtn').onclick = () => window.location.href = 'result.html';
+})();
 </script>
-
 </body>
 </html>

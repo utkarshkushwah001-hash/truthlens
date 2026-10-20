@@ -1,149 +1,47 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TruthLens</title>
-
-    <!-- Tailwind CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <style>
-        html {
-            scroll-behavior: smooth;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>TruthLens — Image inspection</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>html { scroll-behavior: smooth; }</style>
 </head>
-
-<body class="bg-[#09090B] text-white min-h-screen overflow-x-hidden relative">
-
-    <!-- Background Grid -->
-    <div class="absolute inset-0 opacity-10"
-        style="
-        background-image: linear-gradient(#2a2a2a 1px, transparent 1px),
-                          linear-gradient(to right, #2a2a2a 1px, transparent 1px);
-        background-size: 40px 40px;
-        z-index: 0;">
-    </div>
-
-    <!-- Top Left Glow -->
-    <div class="absolute top-0 left-0 w-[450px] h-[450px]
-    bg-purple-600 rounded-full blur-[200px] opacity-20 z-0">
-    </div>
-
-    <!-- Center Glow -->
-    <div class="absolute top-[20%] left-[35%] w-[500px] h-[500px]
-    bg-purple-500 rounded-full blur-[180px] opacity-15 z-0">
-    </div>
-
-    <!-- Bottom Right Glow -->
-    <div class="absolute bottom-0 right-0 w-[500px] h-[500px]
-    bg-cyan-500 rounded-full blur-[220px] opacity-10 z-0">
-    </div>
-
-    <!-- Side Lines -->
-    <div class="absolute left-10 top-20 h-[80%] w-[1px] bg-gray-700 opacity-20"></div>
-    <div class="absolute right-10 top-20 h-[80%] w-[1px] bg-gray-700 opacity-20"></div>
-
-    <!-- Floating Particles -->
-    <div class="absolute top-24 left-1/4 w-2 h-2 bg-purple-400 rounded-full opacity-40"></div>
-    <div class="absolute top-40 right-1/3 w-1 h-1 bg-cyan-400 rounded-full opacity-50"></div>
-    <div class="absolute top-72 left-16 w-2 h-2 bg-purple-300 rounded-full opacity-30"></div>
-    <div class="absolute bottom-40 right-20 w-2 h-2 bg-cyan-300 rounded-full opacity-40"></div>
-
-    <!-- Navbar -->
-    <nav class="relative z-10 px-16 py-8">
-
-        <h1 class="text-3xl font-bold tracking-wide text-purple-400 
-        drop-shadow-[0_0_12px_rgba(168,85,247,0.6)]">
-
-            TruthLens
-
-        </h1>
-
-        <div class="w-20 h-[1px] bg-purple-500 opacity-40 mt-2"></div>
-
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="relative z-10 flex flex-col items-center justify-center text-center mt-12 px-6">
-
-        <p class="text-gray-500 uppercase tracking-widest text-sm mb-6">
-            AUTHENTICITY ENGINE V1.0
-        </p>
-
-        <h2 class="text-6xl md:text-7xl font-bold leading-tight">
-            Know what’s <span class="text-purple-400">real.</span>
-        </h2>
-
-        <p class="text-gray-400 mt-8 max-w-3xl text-lg">
-            Distinguish real imagery from AI-generated content with intelligent visual detection.
-        </p>
-
-        <!-- ONLY CLICKABLE BUTTON -->
-        <button
-        onclick="window.location.href='upload.html'"
-        class="mt-10 border border-purple-500 px-10 py-4 rounded-2xl
-        hover:shadow-xl hover:shadow-purple-500/30 transition duration-300">
-
-            Begin Analysis
-
-        </button>
-
-        <div class="mt-6 text-gray-600 text-sm tracking-wider">
-            ━━━━━━━━━ SYSTEM READY ━━━━━━━━━
-        </div>
-
+<body class="bg-[#09090b] text-white min-h-screen overflow-x-hidden relative">
+  <div aria-hidden="true" class="absolute inset-0 opacity-10" style="background-image:linear-gradient(#2a2a2a 1px,transparent 1px),linear-gradient(to right,#2a2a2a 1px,transparent 1px);background-size:40px 40px;z-index:0"></div>
+  <div aria-hidden="true" class="absolute top-0 left-0 w-[450px] h-[450px] bg-purple-600 rounded-full blur-[200px] opacity-20 z-0"></div>
+  <div aria-hidden="true" class="absolute top-[20%] left-[35%] w-[500px] h-[500px] bg-purple-500 rounded-full blur-[180px] opacity-15 z-0"></div>
+  <div aria-hidden="true" class="absolute bottom-0 right-0 w-[500px] h-[500px] bg-cyan-500 rounded-full blur-[220px] opacity-10 z-0"></div>
+  <nav class="relative z-10 px-6 md:px-16 py-8">
+    <h1 class="text-3xl font-bold tracking-wide text-purple-400">TruthLens</h1>
+    <div class="w-20 h-px bg-purple-500 opacity-40 mt-2"></div>
+  </nav>
+  <main class="relative z-10">
+    <section class="flex flex-col items-center justify-center text-center mt-12 px-6">
+      <p class="text-purple-300 uppercase tracking-widest text-sm mb-6">IMAGE INSPECTION · EARLY PREVIEW</p>
+      <h2 class="text-5xl md:text-7xl font-bold leading-tight">Look closer. <span class="text-purple-400">Stay curious.</span></h2>
+      <p class="text-zinc-400 mt-8 max-w-3xl text-lg leading-8">TruthLens currently validates image files and reports basic properties. AI-generated image detection is not yet connected, so results remain inconclusive rather than pretending to prove authenticity.</p>
+      <a href="upload.html" class="mt-10 inline-block border border-purple-500 px-10 py-4 rounded-2xl hover:shadow-xl hover:shadow-purple-500/30 transition duration-300">Validate an image</a>
+      <div class="mt-6 text-amber-300 text-sm tracking-wide">DETECTOR NOT CONFIGURED · NO AUTHENTICITY SCORE</div>
     </section>
-
-    <!-- Feature Cards -->
-    <section class="relative z-10 flex justify-center gap-10 mt-10 px-10 flex-wrap">
-
-        <!-- Upload -->
-        <div class="border border-gray-800 rounded-2xl p-8 w-72
-        hover:border-purple-500 transition duration-300 text-center backdrop-blur-sm">
-
-            <div class="text-3xl mb-4">↑</div>
-
-            <h3 class="text-xl font-semibold">Upload</h3>
-
-            <p class="text-gray-500 mt-3">
-                Securely upload image for authenticity scanning.
-            </p>
-
-        </div>
-
-        <!-- Analyze -->
-        <div class="border border-gray-800 rounded-2xl p-8 w-72
-        hover:border-purple-500 transition duration-300 text-center backdrop-blur-sm">
-
-            <div class="text-3xl mb-4">◉</div>
-
-            <h3 class="text-xl font-semibold">Analyze</h3>
-
-            <p class="text-gray-500 mt-3">
-                Vision models inspect hidden synthetic patterns.
-            </p>
-
-        </div>
-
-        <!-- Detect -->
-        <div class="border border-gray-800 rounded-2xl p-8 w-72
-        hover:border-purple-500 transition duration-300 text-center backdrop-blur-sm">
-
-            <div class="text-3xl mb-4">✓</div>
-
-            <h3 class="text-xl font-semibold">Detect</h3>
-
-            <p class="text-gray-500 mt-3">
-                Receive confidence score and authenticity insights.
-            </p>
-
-        </div>
-
+    <section class="relative z-10 flex justify-center gap-6 md:gap-10 mt-12 px-6 flex-wrap pb-16">
+      <article class="border border-gray-800 rounded-2xl p-8 w-72 text-center backdrop-blur-sm">
+        <div aria-hidden="true" class="text-3xl mb-4">↑</div>
+        <h3 class="text-xl font-semibold">Validate</h3>
+        <p class="text-zinc-400 mt-3">Check file type, size, and whether the image can be decoded.</p>
+      </article>
+      <article class="border border-gray-800 rounded-2xl p-8 w-72 text-center backdrop-blur-sm">
+        <div aria-hidden="true" class="text-3xl mb-4">◉</div>
+        <h3 class="text-xl font-semibold">Inspect</h3>
+        <p class="text-zinc-400 mt-3">View basic image metadata. Metadata alone cannot prove origin.</p>
+      </article>
+      <article class="border border-gray-800 rounded-2xl p-8 w-72 text-center backdrop-blur-sm">
+        <div aria-hidden="true" class="text-3xl mb-4">✓</div>
+        <h3 class="text-xl font-semibold">Be transparent</h3>
+        <p class="text-zinc-400 mt-3">Get an inconclusive result until a detector is evaluated and integrated.</p>
+      </article>
     </section>
-
+  </main>
 </body>
-
 </html>

@@ -1,192 +1,52 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TruthLens Result</title>
-<script src="https://cdn.tailwindcss.com"></script>
-
-<style>
-body{
-    background:#07070a;
-    overflow:hidden;
-}
-
-/* background grid */
-.grid{
-    position:absolute;
-    inset:0;
-    opacity:.08;
-    background-image:
-    linear-gradient(#333 1px, transparent 1px),
-    linear-gradient(to right,#333 1px,transparent 1px);
-    background-size:40px 40px;
-}
-
-.progress-ring{
-    transform: rotate(-90deg);
-}
-
-.circle{
-    transition: stroke-dashoffset 0.2s linear;
-}
-
-.glass{
-    backdrop-filter: blur(8px);
-    box-shadow: 0 0 30px rgba(168,85,247,.12);
-}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Validation result — TruthLens</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
-<body class="text-white relative">
-
-<div class="grid"></div>
-
-<div class="absolute top-[20%] left-[35%]
-w-[500px] h-[500px]
-bg-purple-600 rounded-full blur-[180px] opacity-10">
-</div>
-
-<section class="relative z-10 min-h-screen
-flex flex-col justify-center items-center px-6">
-
-    <p class="text-gray-400 tracking-widest text-sm mb-8">
-        ANALYSIS COMPLETE
-    </p>
-
-    <!-- score circle -->
-    <div class="relative flex items-center justify-center">
-
-        <svg width="220" height="220"
-        class="progress-ring">
-
-            <circle
-            cx="110"
-            cy="110"
-            r="90"
-            stroke="#222"
-            stroke-width="10"
-            fill="transparent"/>
-
-            <circle
-            id="circle"
-            class="circle"
-            cx="110"
-            cy="110"
-            r="90"
-            stroke="#c084fc"
-            stroke-width="10"
-            fill="transparent"
-            stroke-linecap="round"
-            stroke-dasharray="565"
-            stroke-dashoffset="565"/>
-
-        </svg>
-
-        <div class="absolute text-center">
-
-            <p id="score"
-            class="text-5xl font-bold text-purple-400">
-                0%
-            </p>
-
-            <p class="text-gray-500 mt-2 text-sm">
-                Authenticity Score
-            </p>
-
-        </div>
-
-    </div>
-
-    <!-- dynamic verdict -->
-    <p id="verdict"
-    class="mt-8 text-xl font-semibold text-cyan-400">
-        Analyzing...
-    </p>
-
-    <!-- dynamic breakdown -->
-    <div class="glass border border-gray-800
-    rounded-3xl p-6 mt-10 w-[420px]">
-
-        <div class="flex justify-between mb-4">
-            <span class="text-gray-400">File Size</span>
-            <span id="filesize">0 KB</span>
-        </div>
-
-        <div class="flex justify-between mb-4">
-            <span class="text-gray-400">Detection Score</span>
-            <span id="detectionScore">0%</span>
-        </div>
-
-        <div class="flex justify-between mb-4">
-            <span class="text-gray-400">System Verdict</span>
-            <span id="systemVerdict">---</span>
-        </div>
-
-        <div class="flex justify-between">
-            <span class="text-gray-400">Engine Status</span>
-            <span>Processed</span>
-        </div>
-
-    </div>
-
-    <button
-    onclick="window.location.href='upload.html'"
-    class="mt-10 border border-purple-500
-    px-8 py-3 rounded-xl
-    hover:bg-purple-600 transition">
-
-        Analyze Another
-
-    </button>
-
-</section>
-
+<body class="min-h-screen bg-[#09090b] text-white">
+  <main class="mx-auto max-w-3xl px-6 py-16">
+    <a href="index.html" class="text-xl font-semibold text-violet-300">TruthLens</a>
+    <p class="mt-12 text-xs font-semibold uppercase tracking-[.22em] text-violet-300">Image workspace / 03</p>
+    <h1 class="mt-4 text-4xl font-semibold">Image validation result</h1>
+    <section class="mt-8 rounded-2xl border border-amber-900/60 bg-zinc-950 p-7">
+      <p class="text-sm font-semibold uppercase tracking-wider text-amber-300">Current verdict</p>
+      <h2 id="verdict" class="mt-3 text-3xl font-semibold">Inconclusive</h2>
+      <p id="message" class="mt-4 leading-7 text-zinc-300">No validated AI-image detector is configured yet.</p>
+      <p class="mt-4 text-sm leading-6 text-zinc-500">Passing file validation does not establish whether an image is authentic or AI-generated. TruthLens does not calculate an authenticity percentage until a detector has been evaluated and integrated.</p>
+    </section>
+    <section class="mt-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+      <h3 class="text-lg font-semibold">File metadata</h3>
+      <dl class="mt-4 grid grid-cols-2 gap-4 text-sm">
+        <div><dt class="text-zinc-500">Format</dt><dd id="format" class="mt-1">—</dd></div>
+        <div><dt class="text-zinc-500">Dimensions</dt><dd id="dimensions" class="mt-1">—</dd></div>
+        <div><dt class="text-zinc-500">File size</dt><dd id="size" class="mt-1">—</dd></div>
+        <div><dt class="text-zinc-500">AI detection</dt><dd id="detection" class="mt-1">Not configured</dd></div>
+      </dl>
+    </section>
+    <a href="upload.html" class="mt-7 inline-block rounded-lg bg-violet-300 px-5 py-3 font-semibold text-zinc-950">Validate another image</a>
+  </main>
 <script>
-
-/* get backend data */
-let target = Number(localStorage.getItem("scanScore")) || 50;
-let verdict = localStorage.getItem("scanVerdict") || "Unknown";
-let fileSize = localStorage.getItem("fileSize") || "0";
-
-/* elements */
-let progress = 0;
-
-const circle = document.getElementById("circle");
-const score = document.getElementById("score");
-const verdictText = document.getElementById("verdict");
-
-const detectionScore = document.getElementById("detectionScore");
-const systemVerdict = document.getElementById("systemVerdict");
-const filesize = document.getElementById("filesize");
-
-/* set text */
-verdictText.innerText = verdict;
-detectionScore.innerText = target + "%";
-systemVerdict.innerText = verdict;
-filesize.innerText = fileSize + " KB";
-
-/* circle math */
-const circumference = 565;
-
-const interval = setInterval(()=>{
-
-    progress++;
-
-    score.innerText = progress + "%";
-
-    let offset =
-    circumference - (progress / 100) * circumference;
-
-    circle.style.strokeDashoffset = offset;
-
-    if(progress >= target){
-        clearInterval(interval);
-    }
-
-},30);
-
+(() => {
+  try {
+    const raw = sessionStorage.getItem('truthlensResult');
+    if (!raw) return;
+    const result = JSON.parse(raw);
+    document.getElementById('verdict').textContent = result.verdict || 'Inconclusive';
+    document.getElementById('message').textContent = result.message || 'No validated detector response was provided.';
+    const meta = result.metadata || {};
+    document.getElementById('format').textContent = meta.format || '—';
+    document.getElementById('dimensions').textContent = meta.width && meta.height ? meta.width + ' × ' + meta.height : '—';
+    document.getElementById('size').textContent = typeof meta.file_size_kb === 'number' ? meta.file_size_kb + ' KB' : '—';
+    const checks = result.checks || {};
+    document.getElementById('detection').textContent = checks.ai_image_detection === 'not_configured' ? 'Not configured' : (checks.ai_image_detection || 'Unknown');
+  } catch (_) {
+    document.getElementById('message').textContent = 'The saved validation response could not be read. Please upload the image again.';
+  }
+})();
 </script>
-
 </body>
 </html>
