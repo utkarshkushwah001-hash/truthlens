@@ -36,17 +36,36 @@ dataset/
 
 ## 2. Install the optional benchmark detector
 
-The detector is intentionally not a required TruthLens backend dependency. Choose a candidate, inspect its license and model-weight terms, then install it in a separate virtual environment. For the `lynote-ai/ai-image-detector` candidate, follow its current installation guide: https://github.com/lynote-ai/ai-image-detector
+The detector is intentionally not a required TruthLens backend dependency. Keep it in a separate virtual environment so its PyTorch/computer-vision dependencies do not affect the lightweight Flask app. Review both the package license and each selected checkpoint/model card before commercial or public deployment; the wrapper's MIT license does not automatically license every model weight.
+
+Candidate repository and current install instructions: https://github.com/lynote-ai/ai-image-detector
+
+One workflow is to clone that project into a sibling folder, create its virtual environment there, and install it using its own documented extras. For example, in PowerShell:
+
+```powershell
+# Run from the folder that will contain both repositories
+git clone https://github.com/lynote-ai/ai-image-detector.git
+cd ai-image-detector
+py -3.12 -m venv .venv
+.\\.venv\\Scripts\\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[hf]"
+```
+
+Use the detector project's current README for the backend-specific dependencies; an ensemble such as `ultra` may require more dependencies and disk/RAM than a single backend. The first run may download model weights. Local inference avoids per-image API fees, but it still consumes storage, memory, CPU/GPU, and electricity.
 
 Do not assume that the candidate's advertised score is calibrated or reliable for your dataset.
 
 ## 3. Run inference and export scores
 
-From the TruthLens repository root, with the optional `aidetector` package installed in the active environment:
+Activate the detector environment, then run the TruthLens benchmark script from the TruthLens repository root. Replace `../truthlens` with the actual path to your TruthLens checkout and ensure `./dataset` points to the labeled dataset:
 
-```bash
-python tools/run_detector_benchmark.py ./dataset --backend univfd --output ./benchmarks/univfd.csv
+```powershell
+python ../truthlens/tools/run_detector_benchmark.py ../truthlens/dataset --backend sentry-convnext-small --output ../truthlens/benchmarks/sentry.csv
+python ../truthlens/tools/run_detector_benchmark.py ../truthlens/dataset --backend ultra --output ../truthlens/benchmarks/ultra.csv
 ```
+
+Run both only if the installed extras support both backends. Start with one backend if disk space or hardware is limited. These commands have not been run against a TruthLens dataset yet; no accuracy claim is implied.
 
 The script requires the detector result to explicitly expose `probability_ai`; it will fail rather than guessing another field. The output CSV records labels, scores, generator/source, and transformation.
 
