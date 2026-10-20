@@ -1,4 +1,4 @@
-flask
-flask-cors
-requests
-python-dotenv
+Flask>=3.0,<4.0
+Flask-Cors>=4.0,<6.0
+Pillow>=10.0,<13.0
+python-dotenv>=1.0,<2.0
