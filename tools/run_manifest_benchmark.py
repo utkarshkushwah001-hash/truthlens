@@ -50,7 +50,7 @@ def read_manifest(manifest: Path, split: str, limit: int | None = None) -> list[
     if limit is not None and len(rows) > limit:
         # Balance smoke-test samples so a sorted manifest does not select one class only.
         per_label = limit // 2
-        selected = [row for label in ("real", "ai") for row in rows if row["label"] == label][:per_label]
+        selected = [row for label in ("real", "ai") for row in [item for item in rows if item["label"] == label][:per_label]]
         if limit % 2:
             selected.append(next(row for row in rows if row["label"] == "real" and row not in selected))
         rows = selected
