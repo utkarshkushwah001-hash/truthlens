@@ -28,7 +28,7 @@ class CIFAKEMManifestTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "train").mkdir()
-            with self.assertRaisesRegex(ValueError, "Could not find train"):
+            with self.assertRaisesRegex(ValueError, "Expected train/REAL and train/FAKE"):
                 resolve_layout(root)
 
     def test_ignores_non_image_files(self):
