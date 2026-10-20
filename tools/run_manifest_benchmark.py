@@ -43,12 +43,17 @@ def read_manifest(manifest: Path, split: str, limit: int | None = None) -> list[
             seen.add(normalized)
             row["path"] = normalized
             rows.append(row)
-            if limit is not None and len(rows) >= limit:
-                break
     if not rows:
         raise ValueError(f"No rows found for split '{split}' in {manifest}.")
     if {row["label"] for row in rows} != {"real", "ai"}:
         raise ValueError(f"Selected split '{split}' must contain both real and ai labels.")
+    if limit is not None and len(rows) > limit:
+        # Balance smoke-test samples so a sorted manifest does not select one class only.
+        per_label = limit // 2
+        selected = [row for label in ("real", "ai") for row in rows if row["label"] == label][:per_label]
+        if limit % 2:
+            selected.append(next(row for row in rows if row["label"] == "real" and row not in selected))
+        rows = selected
     missing = [row["path"] for row in rows if not Path(row["path"]).is_file()]
     if missing:
         raise ValueError(f"{len(missing)} image path(s) do not exist; first missing path: {missing[0]}")
