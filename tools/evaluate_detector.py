@@ -78,9 +78,8 @@ def metrics(rows: list[dict[str, str | float]], threshold: float) -> dict[str, f
     specificity = tn / (tn + fp) if tn + fp else None
     precision = tp / (tp + fp) if tp + fp else None
     recall = sensitivity
-    f1 = None
-    if precision is not None and recall is not None:
-        f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+    f1_denominator = 2 * tp + fp + fn
+    f1 = 2 * tp / f1_denominator if f1_denominator else 0.0
     balanced = (sensitivity + specificity) / 2 if sensitivity is not None and specificity is not None else None
     return {
         "samples": len(rows),
