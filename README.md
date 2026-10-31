@@ -37,6 +37,39 @@ Run backend tests from the repository root:
 python -m unittest discover -s tests -v
 ```
 
+## Reproducible detector evaluation
+
+Evaluate a saved score CSV with `label,score` columns (`real` and `ai` labels;
+higher scores must have a documented AI-like meaning):
+
+```powershell
+python tools/evaluate_detector.py benchmarks/predictions.csv --backend univfd --split calibration --output benchmarks/report.json
+python tools/calibrate_detector.py benchmarks/calibration.csv benchmarks/held_out.csv --objective balanced_accuracy --output benchmarks/calibrated-report.json
+```
+
+Reports include sample counts and class balance, accuracy, balanced accuracy,
+precision, recall, F1, confusion matrix, ROC-AUC, and per-class raw-score
+summaries. Group breakdowns are descriptive and may have undefined metrics if a
+group has only one class. Choose thresholds from calibration data only; reserve
+held-out data for a single final evaluation. These metrics do not establish
+performance outside the evaluated dataset.
+
+The local benchmark notes for UnivFD (200 CIFAKE images: 100 per label) report
+ROC-AUC 0.3206 when higher is interpreted as more AI-like (0.6794 after
+reversing direction), and 49.5% accuracy at 0.5. Sentry ConvNeXt Small reports
+0.4340 AUC (0.5660 reversed) and 46.5% accuracy at 0.5. A separate 1,000-image
+UnivFD run reports 0.2694 AUC in that same assumed direction. These preliminary
+results do not support selecting either detector for user-facing classification.
+The reverse-direction result is a diagnostic signal only: it can indicate a
+label, adapter, preprocessing, checkpoint, or domain issue. Do not reverse
+scores or tune a threshold after looking at held-out results.
+
+CIFAKE images are 32×32 and do not represent the range of real uploads. Keep
+dataset partitions and source groups separate; compare the manifest group IDs
+and exact file hashes before making leakage claims. Detector outputs remain
+experimental and the web application therefore continues to return
+“Inconclusive.”
+
 ## Before adding an AI detector
 
 A model must be evaluated on labeled, licensed or consented images, including held-out generator families and realistic image transformations. Measure false positives, false negatives, balanced accuracy, ROC AUC, and abstention coverage. Do not interpret raw model scores as calibrated probabilities without calibration evidence.
@@ -48,3 +81,4 @@ A model must be evaluated on labeled, licensed or consented images, including he
 - Debug mode is disabled. Do not expose Flask's development server to the public internet; use a production WSGI server for deployment.
 - Configure CORS to the exact trusted frontend origin before deployment.
 - AI-origin detection and provenance verification remain unconfigured.
+
