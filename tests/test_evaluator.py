@@ -21,7 +21,7 @@ class DetectorEvaluationTests(unittest.TestCase):
         self.assertEqual(report["overall"]["accuracy"], 1.0)
         self.assertEqual(report["overall"]["f1_ai"], 1.0)
         self.assertEqual(report["overall"]["confusion_matrix"]["actual_ai"]["predicted_ai"], 2)
-        self.assertEqual(report["score_distributions"]["ai"]["median"], 0.85)
+        self.assertAlmostEqual(report["score_distributions"]["ai"]["median"], 0.85)
         self.assertIn("model-a", report["by_generator"])
         self.assertIn("jpeg", report["by_transformation"])
 
