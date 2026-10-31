@@ -35,8 +35,13 @@
     const raw = sessionStorage.getItem('truthlensResult');
     if (!raw) return;
     const result = JSON.parse(raw);
-    document.getElementById('verdict').textContent = result.verdict || 'Inconclusive';
-    document.getElementById('message').textContent = result.message || 'No validated detector response was provided.';
+    const detectorValidated = result.checks && result.checks.ai_image_detection === 'validated';
+    document.getElementById('verdict').textContent = detectorValidated
+      ? (result.verdict || 'Inconclusive')
+      : 'Inconclusive — no validated detector';
+    document.getElementById('message').textContent = detectorValidated
+      ? (result.message || 'No detector response message was provided.')
+      : 'TruthLens did not determine whether this image is AI-generated or real. File validation alone cannot determine image origin.';
     const meta = result.metadata || {};
     document.getElementById('format').textContent = meta.format || '—';
     document.getElementById('dimensions').textContent = meta.width && meta.height ? meta.width + ' × ' + meta.height : '—';
@@ -50,3 +55,4 @@
 </script>
 </body>
 </html>
+

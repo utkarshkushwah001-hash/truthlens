@@ -33,8 +33,13 @@
   }
   try {
     const result = JSON.parse(raw);
-    status.textContent = result.verdict || result.status || 'Inconclusive';
-    message.textContent = result.message || 'The backend returned a response without a message.';
+    const detectorValidated = result.checks && result.checks.ai_image_detection === 'validated';
+    status.textContent = detectorValidated
+      ? (result.verdict || result.status || 'Inconclusive')
+      : 'Inconclusive — no validated detector';
+    message.textContent = detectorValidated
+      ? (result.message || 'The backend returned a response without a message.')
+      : 'TruthLens did not determine whether this image is AI-generated or real. File validation alone cannot determine image origin.';
   } catch (_) {
     status.textContent = 'Could not read the response';
     message.textContent = 'Return to the upload page and try again.';
@@ -44,3 +49,4 @@
 </script>
 </body>
 </html>
+

@@ -26,6 +26,8 @@ def parse_rows(path: Path) -> list[dict[str, str | float]]:
         if not reader.fieldnames or not required.issubset(reader.fieldnames):
             raise ValueError("CSV must contain 'label' and 'score' columns.")
         for line, row in enumerate(reader, start=2):
+            if None in row or row.get("label") is None or row.get("score") is None:
+                raise ValueError(f"Line {line}: malformed CSV row; expected one label and score value.")
             label = (row.get("label") or "").strip().lower()
             if label not in {"real", "ai"}:
                 raise ValueError(f"Line {line}: label must be 'real' or 'ai'.")
@@ -75,6 +77,9 @@ def metrics(rows: list[dict[str, str | float]], threshold: float) -> dict[str, f
     sensitivity = tp / (tp + fn) if tp + fn else None
     specificity = tn / (tn + fp) if tn + fp else None
     precision = tp / (tp + fp) if tp + fp else None
+    recall = sensitivity
+    f1_denominator = 2 * tp + fp + fn
+    f1 = 2 * tp / f1_denominator if f1_denominator else 0.0
     balanced = (sensitivity + specificity) / 2 if sensitivity is not None and specificity is not None else None
     return {
         "samples": len(rows),
@@ -83,13 +88,31 @@ def metrics(rows: list[dict[str, str | float]], threshold: float) -> dict[str, f
         "false_positive": fp,
         "true_negative": tn,
         "false_negative": fn,
+        "accuracy": (tp + tn) / len(rows) if rows else None,
         "sensitivity_ai_recall": sensitivity,
         "specificity_real_recall": specificity,
         "precision_ai": precision,
+        "recall_ai": recall,
+        "f1_ai": f1,
         "false_positive_rate": 1 - specificity if specificity is not None else None,
         "balanced_accuracy": balanced,
         "roc_auc": roc_auc(rows),
+        "confusion_matrix": {"actual_real": {"predicted_real": tn, "predicted_ai": fp}, "actual_ai": {"predicted_real": fn, "predicted_ai": tp}},
     }
+
+
+def score_distributions(rows: list[dict[str, str | float]]) -> dict[str, dict[str, float | int | None]]:
+    """Summarize raw score ranges by label; these are not calibrated confidence."""
+    result: dict[str, dict[str, float | int | None]] = {}
+    for label in ("real", "ai"):
+        scores = sorted(float(row["score"]) for row in rows if row["label"] == label)
+        if not scores:
+            result[label] = {"samples": 0, "mean": None, "median": None, "min": None, "max": None}
+            continue
+        middle = len(scores) // 2
+        median = scores[middle] if len(scores) % 2 else (scores[middle - 1] + scores[middle]) / 2
+        result[label] = {"samples": len(scores), "mean": sum(scores) / len(scores), "median": median, "min": scores[0], "max": scores[-1]}
+    return result
 
 
 def evaluate(rows: list[dict[str, str | float]], threshold: float) -> dict:
@@ -99,6 +122,7 @@ def evaluate(rows: list[dict[str, str | float]], threshold: float) -> dict:
             "on unseen generators, image domains, or edited/compressed images."
         ),
         "overall": metrics(rows, threshold),
+        "score_distributions": score_distributions(rows),
         "by_generator": {},
         "by_transformation": {},
     }
@@ -114,18 +138,37 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("csv_file", type=Path, help="CSV with label,score and optional generator,transformation columns")
     parser.add_argument("--threshold", type=float, default=0.5, help="AI-score decision threshold (default: 0.5)")
+    parser.add_argument("--backend", default="unspecified", help="Detector/backend label recorded in the report")
+    parser.add_argument("--split", default="unspecified", help="Evaluation split label recorded in the report")
+    parser.add_argument("--output", type=Path, help="Optional path for a reproducible JSON report")
     args = parser.parse_args(argv)
     if not math.isfinite(args.threshold) or not 0 <= args.threshold <= 1:
         parser.error("--threshold must be between 0 and 1")
     try:
         rows = parse_rows(args.csv_file)
         report = evaluate(rows, args.threshold)
+        report["evaluation"] = {
+            "dataset": str(args.csv_file),
+            "backend": args.backend,
+            "split": args.split,
+            "samples": len(rows),
+            "class_balance": {label: sum(row["label"] == label for row in rows) for label in ("real", "ai")},
+        }
     except (OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
-    print(json.dumps(report, indent=2, sort_keys=True))
+    rendered = json.dumps(report, indent=2, sort_keys=True)
+    if args.output:
+        try:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(rendered + "\n", encoding="utf-8")
+        except OSError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+    print(rendered)
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
