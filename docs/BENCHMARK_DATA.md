@@ -86,4 +86,5 @@ The report includes false positives on real images, AI recall, balanced accuracy
 - Treat `probability_ai` as a model output, not a calibrated probability, unless calibration has been measured.
 - A strong result on one benchmark does not establish generalization to unseen generators, social-media recompression, screenshots, edits, or adversarial examples.
 
-Until a candidate passes this process, TruthLens should continue returning `Inconclusive` in the public analysis API.
+TruthLens includes an optional Smaug integration that returns a model estimate. The publisher's evaluation has not been independently reproduced for this application, so the model output is explicitly an estimate and not proof. Keep the integration disabled if that limitation is unsuitable for the use case.
+
