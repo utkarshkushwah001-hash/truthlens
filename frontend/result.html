@@ -16,7 +16,7 @@
       <p class="text-sm font-semibold uppercase tracking-wider text-amber-300">Current verdict</p>
       <h2 id="verdict" class="mt-3 text-3xl font-semibold">Inconclusive</h2>
       <p id="message" class="mt-4 leading-7 text-zinc-300">No validated AI-image detector is configured yet.</p>
-      <p class="mt-4 text-sm leading-6 text-zinc-500">Passing file validation does not establish whether an image is authentic or AI-generated. TruthLens does not calculate an authenticity percentage until a detector has been evaluated and integrated.</p>
+      <p class="mt-4 text-sm leading-6 text-zinc-500">This is a detector estimate, not proof of origin. Edited images and unfamiliar generators may be misclassified. The AI score is not calibrated confidence.</p>
     </section>
     <section class="mt-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
       <h3 class="text-lg font-semibold">File metadata</h3>
@@ -25,6 +25,7 @@
         <div><dt class="text-zinc-500">Dimensions</dt><dd id="dimensions" class="mt-1">—</dd></div>
         <div><dt class="text-zinc-500">File size</dt><dd id="size" class="mt-1">—</dd></div>
         <div><dt class="text-zinc-500">AI detection</dt><dd id="detection" class="mt-1">Not configured</dd></div>
+        <div><dt class="text-zinc-500">AI model score</dt><dd id="probability" class="mt-1">—</dd></div>
       </dl>
     </section>
     <a href="upload.html" class="mt-7 inline-block rounded-lg bg-violet-300 px-5 py-3 font-semibold text-zinc-950">Validate another image</a>
@@ -35,19 +36,20 @@
     const raw = sessionStorage.getItem('truthlensResult');
     if (!raw) return;
     const result = JSON.parse(raw);
-    const detectorValidated = result.checks && result.checks.ai_image_detection === 'validated';
-    document.getElementById('verdict').textContent = detectorValidated
+    const checks = result.checks || {};
+    const detectionAvailable = ['model_estimate', 'validated'].includes(checks.ai_image_detection);
+    document.getElementById('verdict').textContent = detectionAvailable
       ? (result.verdict || 'Inconclusive')
-      : 'Inconclusive — no validated detector';
-    document.getElementById('message').textContent = detectorValidated
+      : 'Inconclusive — detector not configured';
+    document.getElementById('message').textContent = detectionAvailable
       ? (result.message || 'No detector response message was provided.')
-      : 'TruthLens did not determine whether this image is AI-generated or real. File validation alone cannot determine image origin.';
+      : 'Install and enable the local Smaug detector to get an AI-generated or likely-real estimate.';
     const meta = result.metadata || {};
     document.getElementById('format').textContent = meta.format || '—';
     document.getElementById('dimensions').textContent = meta.width && meta.height ? meta.width + ' × ' + meta.height : '—';
     document.getElementById('size').textContent = typeof meta.file_size_kb === 'number' ? meta.file_size_kb + ' KB' : '—';
-    const checks = result.checks || {};
-    document.getElementById('detection').textContent = checks.ai_image_detection === 'not_configured' ? 'Not configured' : (checks.ai_image_detection || 'Unknown');
+    document.getElementById('detection').textContent = checks.ai_image_detection === 'model_estimate' ? (result.detector || 'Model estimate') : (checks.ai_image_detection === 'not_configured' ? 'Not configured' : (checks.ai_image_detection || 'Unknown'));
+    document.getElementById('probability').textContent = typeof result.probability_ai === 'number' ? (result.probability_ai * 100).toFixed(1) + '% (model score)' : '—';
   } catch (_) {
     document.getElementById('message').textContent = 'The saved validation response could not be read. Please upload the image again.';
   }
