@@ -6,6 +6,7 @@ classification: a validated detector has not yet been integrated.
 from __future__ import annotations
 
 import io
+import math
 import os
 from pathlib import Path
 
@@ -18,6 +19,11 @@ if __package__:
     from .config import ALLOWED_FORMATS_BY_EXTENSION, MAX_IMAGE_PIXELS, MAX_UPLOAD_BYTES, allowed_origins
 else:  # Support `python backend/app.py` from the project root on Windows.
     from config import ALLOWED_FORMATS_BY_EXTENSION, MAX_IMAGE_PIXELS, MAX_UPLOAD_BYTES, allowed_origins
+
+try:
+    from .detector import DetectorUnavailable, detector_enabled, score_image
+except ImportError:  # Support `python backend/app.py` from the project root.
+    from detector import DetectorUnavailable, detector_enabled, score_image
 
 
 app = Flask(__name__)
@@ -43,7 +49,7 @@ def handle_unexpected_error(error: Exception):
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok", "detector": "not_configured"})
+    return jsonify({"status": "ok", "detector": "smaug_configured" if detector_enabled() else "not_configured"})
 
 
 @app.route("/analyze", methods=["POST"])
@@ -82,11 +88,11 @@ def analyze():
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError):
         return jsonify({"error": "The file could not be decoded as a valid image."}), 400
 
-    # Do not persist uploads. Metadata is not evidence that an image is real or AI-generated.
-    return jsonify({
+    # Do not persist uploads. The optional detector scores the decoded image in memory.
+    result = {
         "status": "inconclusive",
         "verdict": "Inconclusive",
-        "message": "The image passed file validation. TruthLens cannot determine whether it is AI-generated or real because no validated detector is configured.",
+        "message": "The image passed file validation, but the AI-image detector is not configured.",
         "metadata": {
             "format": actual_format,
             "width": width,
@@ -98,7 +104,34 @@ def analyze():
             "ai_image_detection": "not_configured",
             "provenance_verification": "not_configured",
         },
-    })
+    }
+
+    if detector_enabled():
+        try:
+            with Image.open(io.BytesIO(raw)) as image:
+                probability_ai = score_image(image)
+        except DetectorUnavailable as error:
+            return jsonify({"error": str(error), "detector": "unavailable"}), 503
+        try:
+            threshold = float(os.getenv("TRUTHLENS_AI_THRESHOLD", "0.5"))
+        except ValueError:
+            return jsonify({"error": "TRUTHLENS_AI_THRESHOLD must be a number from 0 to 1.", "detector": "unavailable"}), 503
+        if not math.isfinite(threshold) or not 0.0 <= threshold <= 1.0:
+            return jsonify({"error": "TRUTHLENS_AI_THRESHOLD must be a number from 0 to 1.", "detector": "unavailable"}), 503
+        verdict = "Likely AI-generated" if probability_ai >= threshold else "Likely real"
+        result.update({
+            "status": "model_estimate",
+            "verdict": verdict,
+            "message": (
+                f"Smaug model estimate: {probability_ai:.1%} AI score. This model score is not a "
+                "proof of origin and may be wrong, especially on edited or unfamiliar images."
+            ),
+            "detector": "Smaug-AI-Image-Detector",
+            "probability_ai": round(probability_ai, 6),
+            "threshold": threshold,
+        })
+        result["checks"]["ai_image_detection"] = "model_estimate"
+    return jsonify(result)
 
 
 if __name__ == "__main__":
