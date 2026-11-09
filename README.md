@@ -1,84 +1,122 @@
-# TruthLens 🔍
+# TruthLens
 
-TruthLens is an experimental web app for inspecting image files and, eventually, evaluating whether images may be AI-generated.
+TruthLens is a lightweight image validation web application with an offline evaluation toolkit for AI image detector research.
 
-## Current status
+## Current capability and detector status
 
-The current backend validates supported image uploads and reports basic file metadata. **It does not currently detect AI-generated images or verify image provenance.** Valid uploads return an *Inconclusive* result rather than a fabricated authenticity score.
+The web application validates JPEG, PNG, and WEBP uploads and reports basic image metadata. **It does not classify image origin.** Every valid upload returns `Inconclusive` because no detector passed the project's evaluation gate.
 
-## Current features
+Existing CIFAKE experiments are retained in `benchmarks/`. On the reported samples, UnivFD AUC was 0.3206 for 200 images and 0.2694 for a separate 1,000-image sample in the documented higher-means-AI direction. Sentry ConvNeXt Small AUC was 0.4340 for 200 images. These preliminary CIFAKE results do not support production classification. Reversed AUC is diagnostic evidence only; do not flip scores or tune a final test threshold to improve these numbers. CIFAKE's 32×32 images are a pipeline benchmark, not a representative sample of ordinary high-resolution uploads.
 
-- Image upload and local preview
-- Backend image validation for JPEG, PNG, and WEBP
-- Upload size and image-dimension limits
-- Restricted local-development CORS configuration
-- No persistent storage of uploaded images by the analysis endpoint
-- Honest inconclusive result when no detector is configured
+## Features
 
-## Tech stack
+- Responsive image upload with selection, drag-and-drop, local preview, and upload progress.
+- In-memory validation of MIME type, filename extension, decoded image format, file size, and pixel dimensions.
+- Consistent JSON errors, restricted CORS, and no upload persistence.
+- Explicit inconclusive results while no detector is validated.
+- Offline tools for detector benchmarking, score evaluation, calibration, and leakage-aware dataset splits.
 
-- Frontend: HTML, Tailwind CSS, JavaScript
-- Backend: Python, Flask, Flask-CORS, Pillow
+## Technology
+
+- Python 3.12, Flask, Flask-CORS, Pillow, python-dotenv, Waitress.
+- HTML, Tailwind CSS CDN, and vanilla JavaScript.
+- Standard-library `unittest` suite.
+
+## Repository layout
+
+```text
+backend/       Flask API, configuration, and Waitress entry point
+frontend/      Static pages, styles, and upload workflow
+tests/         API, benchmark, metric, and split tests
+tools/         Offline benchmark and evaluation commands
+benchmarks/    Existing score CSVs and dataset split manifests
+docs/          Evaluation, security, dataset, and architecture notes
+```
+
+## Windows setup
+
+Run from the project root in PowerShell. These commands use the venv interpreter directly, so PowerShell script activation policy does not need to change.
+
+```powershell
+Set-Location 'C:\Users\utkar\Downloads\truthlens\truthlens-main'
+py -3.12 -m venv .venv
+& .\.venv\Scripts\python.exe -m pip install --upgrade pip
+& .\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
+```
+
+Edit `.env` only when the frontend origin or port changes. `.env` is ignored by Git; `.env.example` contains local, non-secret defaults.
 
 ## Run locally
 
-From the repository root:
+Start the Flask development server in one PowerShell window:
 
-```bash
-python -m pip install -r backend/requirements.txt
-python backend/app.py
+```powershell
+Set-Location 'C:\Users\utkar\Downloads\truthlens\truthlens-main'
+& .\.venv\Scripts\python.exe backend\app.py
 ```
 
-Serve the `frontend/` directory on port 5500 using a local static server. The frontend calls `http://127.0.0.1:5000/analyze` and the backend allows common local origins by default. For another local origin, set `TRUTHLENS_ALLOWED_ORIGINS` to a comma-separated list of exact origins.
+Serve the frontend in a second window:
 
-Run backend tests from the repository root:
-
-```bash
-python -m unittest discover -s tests -v
+```powershell
+Set-Location 'C:\Users\utkar\Downloads\truthlens\truthlens-main'
+py -3.12 -m http.server 5500 --directory frontend
 ```
+
+Open `http://127.0.0.1:5500`. The API health endpoint is `http://127.0.0.1:5000/health`.
+
+The API defaults to these allowed browser origins:
+
+```text
+http://127.0.0.1:5500
+http://localhost:5500
+```
+
+Set `TRUTHLENS_ALLOWED_ORIGINS` in `.env` to a comma-separated list of exact `http://` or `https://` origins. Wildcards, paths, and credentials in origins are rejected. When deploying the frontend, also set `frontend/js/config.js` `apiUrl` to the public API URL. Do not put secrets in frontend configuration.
+
+## Tests
+
+```powershell
+Set-Location 'C:\Users\utkar\Downloads\truthlens\truthlens-main'
+& .\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+## API behavior
+
+`POST /analyze` accepts one multipart file in the `image` field. Valid files receive HTTP 200 and an `inconclusive` result with metadata and checks. Unsupported format or mismatched MIME/extension receives HTTP 415; malformed image data receives HTTP 400; oversized requests or images receive HTTP 413. API errors are JSON. Files are decoded in memory and not written to `backend/uploads/`.
+
+Limits are 10 MB per request and 40 megapixels per image. The client-side checks improve usability; the backend independently validates all upload data.
 
 ## Reproducible detector evaluation
 
-Evaluate a saved score CSV with `label,score` columns (`real` and `ai` labels;
-higher scores must have a documented AI-like meaning):
+Existing evaluation and calibration scripts accept saved scores; they do not run model inference or validate a model by themselves:
 
 ```powershell
-python tools/evaluate_detector.py benchmarks/predictions.csv --backend univfd --split calibration --output benchmarks/report.json
-python tools/calibrate_detector.py benchmarks/calibration.csv benchmarks/held_out.csv --objective balanced_accuracy --output benchmarks/calibrated-report.json
+& .\.venv\Scripts\python.exe tools\evaluate_detector.py benchmarks\predictions.csv --backend univfd --split calibration --output benchmarks\report.json
+& .\.venv\Scripts\python.exe tools\calibrate_detector.py benchmarks\calibration.csv benchmarks\held_out.csv --objective balanced_accuracy --output benchmarks\calibrated-report.json
 ```
 
-Reports include sample counts and class balance, accuracy, balanced accuracy,
-precision, recall, F1, confusion matrix, ROC-AUC, and per-class raw-score
-summaries. Group breakdowns are descriptive and may have undefined metrics if a
-group has only one class. Choose thresholds from calibration data only; reserve
-held-out data for a single final evaluation. These metrics do not establish
-performance outside the evaluated dataset.
+Keep source groups separate across training, calibration, and final test data. Choose thresholds on calibration data only and evaluate once on an untouched final test set. Report class balance, accuracy, balanced accuracy, precision, recall, F1, confusion matrix, ROC-AUC, and false-positive rate. Detector outputs are not calibrated confidence unless calibration has been independently demonstrated.
 
-The local benchmark notes for UnivFD (200 CIFAKE images: 100 per label) report
-ROC-AUC 0.3206 when higher is interpreted as more AI-like (0.6794 after
-reversing direction), and 49.5% accuracy at 0.5. Sentry ConvNeXt Small reports
-0.4340 AUC (0.5660 reversed) and 46.5% accuracy at 0.5. A separate 1,000-image
-UnivFD run reports 0.2694 AUC in that same assumed direction. These preliminary
-results do not support selecting either detector for user-facing classification.
-The reverse-direction result is a diagnostic signal only: it can indicate a
-label, adapter, preprocessing, checkpoint, or domain issue. Do not reverse
-scores or tune a threshold after looking at held-out results.
+See [detector evaluation](docs/DETECTOR_EVALUATION.md), [dataset splits](docs/DATASET_SPLITS.md), and [benchmark setup](docs/BENCHMARK_DATA.md) before running new experiments. The original score CSVs and manifests are preserved.
 
-CIFAKE images are 32×32 and do not represent the range of real uploads. Keep
-dataset partitions and source groups separate; compare the manifest group IDs
-and exact file hashes before making leakage claims. Detector outputs remain
-experimental and the web application therefore continues to return
-“Inconclusive.”
+## Deployment preparation
 
-## Before adding an AI detector
+For a Windows-hosted validation API, Waitress is included as a production WSGI server. Start it behind a TLS-terminating reverse proxy, and keep it bound to loopback when the proxy runs on the same machine:
 
-A model must be evaluated on labeled, licensed or consented images, including held-out generator families and realistic image transformations. Measure false positives, false negatives, balanced accuracy, ROC AUC, and abstention coverage. Do not interpret raw model scores as calibrated probabilities without calibration evidence.
+```powershell
+Set-Location 'C:\Users\utkar\Downloads\truthlens\truthlens-main'
+& .\.venv\Scripts\python.exe backend\serve.py
+```
 
-## Security and deployment notes
+Set `TRUTHLENS_ALLOWED_ORIGINS` to the deployed frontend origin. Serve the static frontend over HTTPS and set its `apiUrl` to the HTTPS API endpoint. Add process supervision, log rotation, monitoring, and a reverse proxy before public exposure. No production service has been deployed. The current app is suitable only as an image validation service; it does not provide AI image detection.
 
-- The API limits uploads to 10 MB and decoded images to 40 megapixels.
-- Uploads are processed in memory and are not written to disk.
-- Debug mode is disabled. Do not expose Flask's development server to the public internet; use a production WSGI server for deployment.
-- Configure CORS to the exact trusted frontend origin before deployment.
-- AI-origin detection and provenance verification remain unconfigured.
+## Security and limitations
+
+- The backend listens on `127.0.0.1` by default and does not enable Flask debug mode.
+- Uploads are never saved. `backend/uploads/` is Git-ignored to protect legacy/local files.
+- CORS is restricted to exact configured origins.
+- Use HTTPS, a reverse proxy, and suitable operational controls before public exposure.
+- No detector is integrated. Image pixels and basic metadata cannot prove authorship or provenance.
+- A detector that performs well on one dataset can fail on unseen generators, edits, resizing, screenshots, or recompression. TruthLens will keep returning `Inconclusive` until a candidate passes an independent, realistic evaluation.
 
