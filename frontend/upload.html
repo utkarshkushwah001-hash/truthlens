@@ -20,10 +20,18 @@
       <section class="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6">
         <label for="fileInput" class="block text-sm font-medium text-zinc-200">Choose an image</label>
         <p class="mt-2 text-sm text-zinc-500">PNG, JPG or WEBP · up to 10 MB</p>
+        <div id="dropZone" role="button" tabindex="0" aria-label="Drop an image here or press Enter to choose a file" aria-describedby="dropHint" class="mt-5 cursor-pointer rounded-xl border-2 border-dashed border-zinc-700 px-5 py-6 text-center transition hover:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400">
+          <p class="font-medium text-zinc-200">Drop an image here</p>
+          <p id="dropHint" class="mt-1 text-sm text-zinc-500">or choose a file below</p>
+        </div>
         <input id="fileInput" name="image" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" required class="mt-5 block w-full cursor-pointer rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-violet-300 file:px-4 file:py-2 file:font-semibold file:text-zinc-950">
         <p id="fileError" class="mt-3 min-h-5 text-sm text-rose-300" role="alert"></p>
         <button id="startBtn" type="submit" class="mt-5 w-full rounded-lg bg-violet-300 px-5 py-3 font-semibold text-zinc-950 transition hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-50">Validate image</button>
         <p id="status" class="mt-4 text-sm text-zinc-400" role="status" aria-live="polite"></p>
+        <div id="progressContainer" class="mt-3 hidden" aria-live="polite">
+          <label for="uploadProgress" id="progressText" class="mb-1 block text-xs text-zinc-500">Uploading image</label>
+          <progress id="uploadProgress" max="100" value="0" class="h-2 w-full accent-violet-400">0%</progress>
+        </div>
       </section>
       <section class="min-h-72 overflow-hidden rounded-2xl border border-zinc-800 bg-[#0d0d11]">
         <div class="flex items-center justify-between border-b border-zinc-800 px-5 py-4"><h2 class="text-sm font-medium">Local preview</h2><span id="previewMeta" class="text-xs text-zinc-500">No file selected</span></div>
@@ -35,31 +43,46 @@
     </form>
     <p class="mt-8 max-w-3xl text-xs leading-5 text-zinc-600">Privacy note: the selected image is sent to the configured TruthLens backend for validation. Do not upload sensitive images to a server you do not control.</p>
   </main>
+<script src="js/config.js"></script>
 <script>
 (() => {
   const form = document.getElementById('uploadForm');
   const fileInput = document.getElementById('fileInput');
+  const dropZone = document.getElementById('dropZone');
   const previewImage = document.getElementById('previewImage');
   const previewPlaceholder = document.getElementById('previewPlaceholder');
   const previewMeta = document.getElementById('previewMeta');
   const fileError = document.getElementById('fileError');
   const status = document.getElementById('status');
   const startBtn = document.getElementById('startBtn');
+  const progressContainer = document.getElementById('progressContainer');
+  const uploadProgress = document.getElementById('uploadProgress');
+  const progressText = document.getElementById('progressText');
   const maxBytes = 10 * 1024 * 1024;
-  const allowed = new Set(['image/png', 'image/jpeg', 'image/webp']);
+  const allowed = new Map([
+    ['.png', 'image/png'],
+    ['.jpg', 'image/jpeg'],
+    ['.jpeg', 'image/jpeg'],
+    ['.webp', 'image/webp'],
+  ]);
   let previewUrl = null;
 
-  fileInput.addEventListener('change', () => {
-    fileError.textContent = '';
-    status.textContent = '';
-    const file = fileInput.files && fileInput.files[0];
+  function clearPreview() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     previewUrl = null;
+    previewImage.removeAttribute('src');
     previewImage.classList.add('hidden');
     previewPlaceholder.classList.remove('hidden');
     previewMeta.textContent = 'No file selected';
+  }
+
+  function displayFile(file) {
+    fileError.textContent = '';
+    status.textContent = '';
+    clearPreview();
     if (!file) return;
-    if (!/\.(png|jpe?g|webp)$/i.test(file.name) || !allowed.has(file.type)) {
+    const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (!allowed.has(extension) || file.type !== allowed.get(extension)) {
       fileError.textContent = 'Choose a valid PNG, JPG or WEBP image.';
       fileInput.value = '';
       return;
@@ -74,33 +97,107 @@
     previewImage.classList.remove('hidden');
     previewPlaceholder.classList.add('hidden');
     previewMeta.textContent = (file.size / 1024).toFixed(1) + ' KB';
+  }
+
+  fileInput.addEventListener('change', () => displayFile(fileInput.files && fileInput.files[0]));
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      fileInput.click();
+    }
   });
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropZone.classList.add('border-violet-400', 'bg-violet-950/20');
+    });
+  });
+  ['dragleave', 'drop'].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropZone.classList.remove('border-violet-400', 'bg-violet-950/20');
+    });
+  });
+  dropZone.addEventListener('drop', (event) => {
+    const files = event.dataTransfer && event.dataTransfer.files;
+    if (!files || files.length !== 1) {
+      fileError.textContent = 'Drop one image at a time.';
+      return;
+    }
+    const transfer = new DataTransfer();
+    transfer.items.add(files[0]);
+    fileInput.files = transfer.files;
+    displayFile(files[0]);
+  });
+
+  function uploadImage(file) {
+    return new Promise((resolve, reject) => {
+      const request = new XMLHttpRequest();
+      const body = new FormData();
+      body.append('image', file, file.name);
+      const apiUrl = window.TRUTHLENS_CONFIG && window.TRUTHLENS_CONFIG.apiUrl;
+      if (!apiUrl) {
+        reject(new Error('TruthLens API URL is not configured.'));
+        return;
+      }
+      request.open('POST', apiUrl);
+      request.timeout = 120000;
+      request.upload.addEventListener('progress', (event) => {
+        if (!event.lengthComputable) return;
+        const percent = Math.round((event.loaded / event.total) * 100);
+        uploadProgress.value = percent;
+        progressText.textContent = `Uploading image: ${percent}%`;
+        if (percent >= 100) status.textContent = 'Upload complete. Validating the image…';
+      });
+      request.addEventListener('load', () => {
+        let payload = {};
+        try { payload = JSON.parse(request.responseText); } catch (_) { /* handled below */ }
+        if (request.status < 200 || request.status >= 300) {
+          reject(new Error(payload.error || `Request failed (${request.status}).`));
+          return;
+        }
+        resolve(payload);
+      });
+      request.addEventListener('error', () => reject(new Error('Could not connect to the TruthLens backend.')));
+      request.addEventListener('timeout', () => reject(new Error('The request timed out. Try a smaller image or retry.')));
+      request.send(body);
+    });
+  }
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const file = fileInput.files && fileInput.files[0];
     if (!file) { fileError.textContent = 'Choose an image first.'; return; }
-    if (file.size > maxBytes || !allowed.has(file.type)) { fileError.textContent = 'The selected file is not supported or exceeds 10 MB.'; return; }
+    const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (file.size > maxBytes || !allowed.has(extension) || file.type !== allowed.get(extension)) {
+      fileError.textContent = 'The selected file is not supported or exceeds 10 MB.';
+      return;
+    }
     startBtn.disabled = true;
     startBtn.textContent = 'Validating…';
-    status.textContent = 'Sending image to the configured backend…';
+    status.textContent = 'Connecting to the TruthLens backend…';
+    progressContainer.classList.remove('hidden');
+    uploadProgress.value = 0;
+    progressText.textContent = 'Uploading image';
     fileError.textContent = '';
     try {
-      const body = new FormData();
-      body.append('image', file, file.name);
-      const response = await fetch('http://127.0.0.1:5000/analyze', { method: 'POST', body });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || 'Request failed (' + response.status + ').');
+      const payload = await uploadImage(file);
       sessionStorage.setItem('truthlensResult', JSON.stringify(payload));
       window.location.href = 'analyze.html';
     } catch (error) {
       status.textContent = error.message || 'Could not connect to the TruthLens backend.';
+      progressContainer.classList.add('hidden');
     } finally {
       startBtn.disabled = false;
       startBtn.textContent = 'Validate image';
     }
   });
+
+  window.addEventListener('pagehide', clearPreview);
 })();
 </script>
 </body>
 </html>
+
