@@ -1,0 +1,4 @@
+# Install separately from lightweight API dependencies when enabling Smaug.
+sentence-transformers[image]>=5.1,<6.0
+huggingface_hub>=0.34,<1.0
+
