@@ -33,13 +33,13 @@
   }
   try {
     const result = JSON.parse(raw);
-    const detectorValidated = result.checks && result.checks.ai_image_detection === 'validated';
-    status.textContent = detectorValidated
-      ? (result.verdict || result.status || 'Inconclusive')
-      : 'Inconclusive — no validated detector';
-    message.textContent = detectorValidated
-      ? (result.message || 'The backend returned a response without a message.')
-      : 'TruthLens did not determine whether this image is AI-generated or real. File validation alone cannot determine image origin.';
+    const detectionAvailable = result.checks && ['model_estimate', 'validated'].includes(result.checks.ai_image_detection);
+    status.textContent = detectionAvailable
+      ? (result.verdict || 'Inconclusive')
+      : 'Inconclusive — detector not configured';
+    message.textContent = detectionAvailable
+      ? (result.message || 'The detector returned an estimate.')
+      : 'Install and enable the local Smaug detector to get an AI-generated or likely-real estimate.';
   } catch (_) {
     status.textContent = 'Could not read the response';
     message.textContent = 'Return to the upload page and try again.';
