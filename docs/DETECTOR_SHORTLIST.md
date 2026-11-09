@@ -1,20 +1,20 @@
 # TruthLens detector shortlist
 
-**Decision: do not expose a model score to users until TruthLens has reproduced a benchmark on a held-out dataset.** Vendor/model-card numbers are useful for choosing candidates, not proof of production reliability.
+**Selected optional candidate: Smaug-AI-Image-Detector.** It is integrated as a model estimate behind an explicit local opt-in. TruthLens has not independently reproduced the model-card benchmark, so its output is not presented as proof or calibrated confidence.
 
-## Candidate A — Smaug AI Image Detector
+## Selected — Smaug AI Image Detector
 
 - Model card: https://huggingface.co/abacusai/Smaug-AI-Image-Detector
 - Release announcement: https://blog.abacus.ai/blog/2026/10/17/smaug-ai-image-detector/
-- Why test it: very recent candidate; its release announcement reports an evaluation against 10 open-source detectors on 26,070 images from three public benchmarks, including an operating point at a 5% false-alarm rate.
-- Caution: the reported figures are from the release author's evaluation. Independently reproduce results, inspect model license and inference requirements, and verify model-card limitations before integrating it.
+- Why selected: the publisher supplies local PyTorch weights and code, documents CPU and NVIDIA GPU operation, and reports evaluation against other detectors on 26,070 images from three public benchmarks, including a 5% false-alarm operating point.
+- Caution: these figures are from the release author's evaluation. The project has not independently reproduced them; check license and current model limitations before deployment.
 
 ## Candidate B — lynote-ai/ai-image-detector
 
 - Repository: https://github.com/lynote-ai/ai-image-detector
 - License in repository metadata: MIT.
 - Why test it: provides an installable CLI/API and benchmark commands, supports model backends including UnivFD and Sentry ConvNeXt, and documents limitations and reproducible evaluation workflows.
-- Caution: its documented benchmark results are repository-maintainer results, not independent guarantees. It introduces PyTorch and computer-vision dependencies; avoid adding the whole dependency stack to the lightweight Flask upload API until a candidate is selected.
+- Caution: its documented benchmark results are repository-maintainer results, not independent guarantees. It introduces PyTorch and computer-vision dependencies, so it remains a comparison candidate rather than the integrated model.
 
 ## Candidate C — SigLIP2 + DINOv2 fine-tuned detector
 
@@ -31,10 +31,11 @@
 5. Report false-positive rate on real photographs, AI recall, balanced accuracy, ROC AUC, subgroup performance, inference latency, and abstention coverage.
 6. Select thresholds on calibration data, then report once on an untouched test set.
 7. Inspect model license and any custom-code requirement before deployment.
-8. Only after these checks, implement a detector adapter behind an optional dependency and keep an explicit `inconclusive` path.
+8. Keep the Smaug integration optional and retain an explicit `inconclusive` path when it is off or unavailable.
 
 ## Why the bar is high
 
 A 2026 zero-shot benchmark covering 23 pretrained detector variants, 12 datasets, and 291 generators reports substantial variation in detector rankings and poor performance on some modern commercial generators. This argues against treating any single model-card metric as universal evidence.
 
 Reference: https://arxiv.org/abs/2602.07814
+
