@@ -143,13 +143,13 @@
         return;
       }
       request.open('POST', apiUrl);
-      request.timeout = 120000;
+      request.timeout = 600000;
       request.upload.addEventListener('progress', (event) => {
         if (!event.lengthComputable) return;
         const percent = Math.round((event.loaded / event.total) * 100);
         uploadProgress.value = percent;
         progressText.textContent = `Uploading image: ${percent}%`;
-        if (percent >= 100) status.textContent = 'Upload complete. Validating the image…';
+        if (percent >= 100) status.textContent = 'Upload complete. Validating and analyzing the image… The first run may take several minutes while the local model downloads.';
       });
       request.addEventListener('load', () => {
         let payload = {};
