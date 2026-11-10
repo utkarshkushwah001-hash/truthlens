@@ -34,8 +34,9 @@ def _friendly_error(error: Exception) -> str:
             "set TRUTHLENS_DETECTOR=smaug, and restart the API."
         )
     return (
-        "The Smaug detector could not load its model. Check internet access for the first model "
-        "download, available disk space, and the configured model revision, then restart the API."
+        "The Smaug detector could not load its model. Install the versions in "
+        "backend/detector-requirements.txt, check model download access and disk space, "
+        "then restart the API."
     )
 
 
@@ -88,4 +89,3 @@ def reset_model_for_tests() -> None:
     with _load_lock:
         _model = None
         _model_error = None
-
