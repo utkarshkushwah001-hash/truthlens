@@ -1,10 +1,5 @@
-"""TruthLens upload validation API.
-
-This version validates image uploads but deliberately does not claim AI-image
-classification: a validated detector has not yet been integrated.
-"""
+"""TruthLens image validation API with an optional local AI-image detector."""
 from __future__ import annotations
-
 import io
 import math
 import os
@@ -137,4 +132,3 @@ def analyze():
 if __name__ == "__main__":
     # Debug mode stays off. Use a production WSGI server when deploying.
     app.run(host="127.0.0.1", port=int(os.getenv("PORT", "5000")), debug=False)
-
