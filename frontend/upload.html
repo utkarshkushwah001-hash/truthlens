@@ -4,44 +4,58 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>Upload an image — TruthLens</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="description" content="Choose or drop an image for TruthLens to validate and estimate.">
+  <title>Upload an image: TruthLens</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Sofia+Sans+Extra+Condensed:wght@200;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/site.css">
 </head>
-<body class="min-h-screen bg-[#09090b] text-white">
-  <header class="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-    <a href="index.html" class="text-xl font-semibold tracking-tight text-violet-300">TruthLens</a>
-    <span class="text-sm text-zinc-500">Image validation preview</span>
+<body class="page page--tool">
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="wordmark" href="index.html" aria-label="TruthLens home">TruthLens</a>
+      <p class="header-note">Image validation</p>
+    </div>
   </header>
-  <main class="mx-auto max-w-5xl px-6 py-10">
-    <p class="text-xs font-semibold uppercase tracking-[.22em] text-violet-300">Image workspace / 01</p>
-    <h1 class="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">Start with the original file.</h1>
-    <p class="mt-4 max-w-2xl leading-7 text-zinc-400">With the local Smaug detector installed and enabled, TruthLens estimates whether an image is AI-generated or likely real. This is a model estimate, not proof of origin.</p>
-    <form id="uploadForm" class="mt-10 grid gap-8 md:grid-cols-[1.1fr_.9fr]" novalidate>
-      <section class="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6">
-        <label for="fileInput" class="block text-sm font-medium text-zinc-200">Choose an image</label>
-        <p class="mt-2 text-sm text-zinc-500">PNG, JPG or WEBP · up to 10 MB</p>
-        <div id="dropZone" role="button" tabindex="0" aria-label="Drop an image here or press Enter to choose a file" aria-describedby="dropHint" class="mt-5 cursor-pointer rounded-xl border-2 border-dashed border-zinc-700 px-5 py-6 text-center transition hover:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400">
-          <p class="font-medium text-zinc-200">Drop an image here</p>
-          <p id="dropHint" class="mt-1 text-sm text-zinc-500">or choose a file below</p>
+  <main class="container tool-main">
+    <div class="screen-heading">
+      <p class="page-note">Image workspace / 01</p>
+      <h1>Start with the original file.</h1>
+      <p class="lead">With the local Smaug detector installed and enabled, TruthLens estimates whether an image is AI-generated or likely real. This is a model estimate, not proof of origin.</p>
+    </div>
+    <form id="uploadForm" class="upload-layout" novalidate>
+      <section class="upload-controls" aria-labelledby="uploadLabel">
+        <div class="upload-controls__intro">
+          <h2 id="uploadLabel"><label for="fileInput">Choose an image</label></h2>
+          <p class="field-help">PNG, JPG, or WEBP. Up to 10 MB.</p>
         </div>
-        <input id="fileInput" name="image" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" required class="mt-5 block w-full cursor-pointer rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-violet-300 file:px-4 file:py-2 file:font-semibold file:text-zinc-950">
-        <p id="fileError" class="mt-3 min-h-5 text-sm text-rose-300" role="alert"></p>
-        <button id="startBtn" type="submit" class="mt-5 w-full rounded-lg bg-violet-300 px-5 py-3 font-semibold text-zinc-950 transition hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-50">Validate image</button>
-        <p id="status" class="mt-4 text-sm text-zinc-400" role="status" aria-live="polite"></p>
-        <div id="progressContainer" class="mt-3 hidden" aria-live="polite">
-          <label for="uploadProgress" id="progressText" class="mb-1 block text-xs text-zinc-500">Uploading image</label>
-          <progress id="uploadProgress" max="100" value="0" class="h-2 w-full accent-violet-400">0%</progress>
+        <button id="dropZone" class="drop-zone" type="button" aria-label="Choose image file" aria-describedby="dropHint">
+          <span class="drop-zone__title">Drop image</span>
+          <span id="dropHint" class="drop-zone__hint">Choose file</span>
+        </button>
+        <input id="fileInput" class="file-input" name="image" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" required>
+        <p id="fileError" class="field-error" role="alert"></p>
+        <button id="startBtn" class="button button--primary upload-submit" type="submit">Validate image</button>
+        <p id="status" class="request-status" role="status" aria-live="polite"></p>
+        <div id="progressContainer" class="progress-group hidden" aria-live="polite">
+          <label for="uploadProgress" id="progressText">Uploading image</label>
+          <progress id="uploadProgress" max="100" value="0">0%</progress>
         </div>
       </section>
-      <section class="min-h-72 overflow-hidden rounded-2xl border border-zinc-800 bg-[#0d0d11]">
-        <div class="flex items-center justify-between border-b border-zinc-800 px-5 py-4"><h2 class="text-sm font-medium">Local preview</h2><span id="previewMeta" class="text-xs text-zinc-500">No file selected</span></div>
-        <div class="flex min-h-64 items-center justify-center p-5">
-          <img id="previewImage" alt="Preview of selected image" class="hidden max-h-96 max-w-full rounded-md object-contain">
-          <p id="previewPlaceholder" class="text-sm text-zinc-600">Your image preview appears here.</p>
+      <section class="preview-sheet" aria-labelledby="previewHeading">
+        <div class="preview-sheet__head">
+          <h2 id="previewHeading">Local preview</h2>
+          <span id="previewMeta" class="preview-meta">No file selected</span>
+        </div>
+        <div id="previewImage" class="preview-frame" role="group" aria-label="Selected image preview" hidden></div>
+        <div id="previewPlaceholder" class="preview-empty">
+          <p>No file selected</p>
+          <span>Your image preview appears here.</span>
         </div>
       </section>
     </form>
-    <p class="mt-8 max-w-3xl text-xs leading-5 text-zinc-600">Privacy note: the selected image is sent to the configured TruthLens backend for validation. Do not upload sensitive images to a server you do not control.</p>
+    <p class="privacy-note">Privacy note: the selected image is sent to the configured TruthLens backend for validation. Do not upload sensitive images to a server you do not control.</p>
   </main>
 <script src="js/config.js"></script>
 <script>
@@ -70,9 +84,9 @@
   function clearPreview() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     previewUrl = null;
-    previewImage.removeAttribute('src');
-    previewImage.classList.add('hidden');
-    previewPlaceholder.classList.remove('hidden');
+    previewImage.replaceChildren();
+    previewImage.hidden = true;
+    previewPlaceholder.hidden = false;
     previewMeta.textContent = 'No file selected';
   }
 
@@ -93,9 +107,12 @@
       return;
     }
     previewUrl = URL.createObjectURL(file);
-    previewImage.src = previewUrl;
-    previewImage.classList.remove('hidden');
-    previewPlaceholder.classList.add('hidden');
+    const image = new Image();
+    image.src = previewUrl;
+    image.alt = 'Preview of selected image';
+    previewImage.replaceChildren(image);
+    previewImage.hidden = false;
+    previewPlaceholder.hidden = true;
     previewMeta.textContent = (file.size / 1024).toFixed(1) + ' KB';
   }
 
@@ -111,13 +128,13 @@
   ['dragenter', 'dragover'].forEach((eventName) => {
     dropZone.addEventListener(eventName, (event) => {
       event.preventDefault();
-      dropZone.classList.add('border-violet-400', 'bg-violet-950/20');
+      dropZone.classList.add('is-hovering');
     });
   });
   ['dragleave', 'drop'].forEach((eventName) => {
     dropZone.addEventListener(eventName, (event) => {
       event.preventDefault();
-      dropZone.classList.remove('border-violet-400', 'bg-violet-950/20');
+      dropZone.classList.remove('is-hovering');
     });
   });
   dropZone.addEventListener('drop', (event) => {
@@ -200,4 +217,3 @@
 </script>
 </body>
 </html>
-
