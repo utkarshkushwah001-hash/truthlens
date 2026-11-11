@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tools.evaluate_detector import evaluate, parse_rows, roc_auc
+from tools.evaluate_detector import evaluate, metrics, parse_rows, roc_auc
 
 
 class DetectorEvaluationTests(unittest.TestCase):
@@ -18,6 +18,10 @@ class DetectorEvaluationTests(unittest.TestCase):
         self.assertEqual(report["overall"]["balanced_accuracy"], 1.0)
         self.assertEqual(report["overall"]["roc_auc"], 1.0)
         self.assertEqual(report["overall"]["false_positive"], 0)
+        self.assertEqual(report["overall"]["accuracy"], 1.0)
+        self.assertEqual(report["overall"]["f1_ai"], 1.0)
+        self.assertEqual(report["overall"]["confusion_matrix"]["actual_ai"]["predicted_ai"], 2)
+        self.assertAlmostEqual(report["score_distributions"]["ai"]["median"], 0.85)
         self.assertIn("model-a", report["by_generator"])
         self.assertIn("jpeg", report["by_transformation"])
 
@@ -27,6 +31,18 @@ class DetectorEvaluationTests(unittest.TestCase):
             {"label": "ai", "score": 0.5},
         ]
         self.assertEqual(roc_auc(rows), 0.5)
+
+    def test_zero_predicted_positives_has_undefined_precision_and_zero_f1(self):
+        rows = [
+            {"label": "real", "score": 0.1},
+            {"label": "ai", "score": 0.4},
+        ]
+        report = metrics(rows, 0.5)
+        self.assertIsNone(report["precision_ai"])
+        self.assertEqual(report["f1_ai"], 0.0)
+
+    def test_auc_is_undefined_if_a_class_is_missing(self):
+        self.assertIsNone(roc_auc([{"label": "ai", "score": 0.8}]))
 
     def test_csv_validation_and_optional_group_fields(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -50,6 +66,14 @@ class DetectorEvaluationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "at least one real and one AI"):
                 parse_rows(path)
 
+    def test_malformed_rows_report_line_number(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "scores.csv"
+            path.write_text("label,score\nreal,0.1,unexpected\nai,0.9\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Line 2: malformed CSV row"):
+                parse_rows(path)
+
 
 if __name__ == "__main__":
     unittest.main()
+

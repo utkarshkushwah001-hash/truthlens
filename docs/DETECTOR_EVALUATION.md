@@ -43,7 +43,7 @@ The report includes confusion counts, AI recall/sensitivity, real-image specific
 
 ## Current TruthLens status
 
-No detector is integrated yet. The upload endpoint intentionally returns an inconclusive result. A candidate must be selected and tested against this protocol before the app exposes its scores to users.
+The optional Smaug adapter returns a clearly labeled model estimate, not a validated claim or proof of image origin. The model publisher reports evaluation on OpenFake Reddit, OpenFake Core, and CommunityForensics, but TruthLens has not reproduced those results on its intended user population. See the shortlist for selection notes and limitations. Keep the detector disabled if the model runtime is unavailable or this estimate is unsuitable for the use case.
 
 ## Why this matters
 
@@ -52,3 +52,4 @@ Recent large-scale zero-shot benchmarking reports that detector rankings vary co
 - [Out-of-the-box benchmark of open-source AI-image detectors (2026)](https://arxiv.org/abs/2602.07814)
 - [AI-GenBench (2025)](https://arxiv.org/abs/2504.20865)
 - [Fake or JPEG? Dataset bias study (2024)](https://arxiv.org/abs/2403.17608)
+

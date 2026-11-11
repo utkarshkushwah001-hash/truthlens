@@ -4,30 +4,55 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>Validation result — TruthLens</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="description" content="TruthLens image validation result, file metadata, and local model estimate.">
+  <title>Validation result: TruthLens</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Sofia+Sans+Extra+Condensed:wght@200;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/site.css">
 </head>
-<body class="min-h-screen bg-[#09090b] text-white">
-  <main class="mx-auto max-w-3xl px-6 py-16">
-    <a href="index.html" class="text-xl font-semibold text-violet-300">TruthLens</a>
-    <p class="mt-12 text-xs font-semibold uppercase tracking-[.22em] text-violet-300">Image workspace / 03</p>
-    <h1 class="mt-4 text-4xl font-semibold">Image validation result</h1>
-    <section class="mt-8 rounded-2xl border border-amber-900/60 bg-zinc-950 p-7">
-      <p class="text-sm font-semibold uppercase tracking-wider text-amber-300">Current verdict</p>
-      <h2 id="verdict" class="mt-3 text-3xl font-semibold">Inconclusive</h2>
-      <p id="message" class="mt-4 leading-7 text-zinc-300">No validated AI-image detector is configured yet.</p>
-      <p class="mt-4 text-sm leading-6 text-zinc-500">Passing file validation does not establish whether an image is authentic or AI-generated. TruthLens does not calculate an authenticity percentage until a detector has been evaluated and integrated.</p>
-    </section>
-    <section class="mt-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-      <h3 class="text-lg font-semibold">File metadata</h3>
-      <dl class="mt-4 grid grid-cols-2 gap-4 text-sm">
-        <div><dt class="text-zinc-500">Format</dt><dd id="format" class="mt-1">—</dd></div>
-        <div><dt class="text-zinc-500">Dimensions</dt><dd id="dimensions" class="mt-1">—</dd></div>
-        <div><dt class="text-zinc-500">File size</dt><dd id="size" class="mt-1">—</dd></div>
-        <div><dt class="text-zinc-500">AI detection</dt><dd id="detection" class="mt-1">Not configured</dd></div>
+<body class="page page--tool">
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="wordmark" href="index.html" aria-label="TruthLens home">TruthLens</a>
+      <p class="header-note">Image validation</p>
+    </div>
+  </header>
+  <main class="container tool-main">
+    <div class="screen-heading">
+      <p class="page-note">Image workspace / 03</p>
+      <h1>Image validation result.</h1>
+    </div>
+    <section class="result-sheet" aria-labelledby="verdict">
+      <div class="result-summary">
+        <h2 id="verdict" class="result-verdict">Inconclusive</h2>
+        <p id="message" class="result-message">Your analysis result will appear here.</p>
+        <p class="result-caution">This is a detector estimate, not proof of origin. Edited images and unfamiliar generators may be misclassified. The AI score is not calibrated confidence.</p>
+      </div>
+      <dl class="metadata-list">
+        <div class="metadata-row">
+          <dt>AI detection</dt>
+          <dd id="detection">Not configured</dd>
+        </div>
+        <div class="metadata-row">
+          <dt>AI model score</dt>
+          <dd id="probability">Not available</dd>
+        </div>
+        <div class="metadata-row">
+          <dt>Format</dt>
+          <dd id="format">Not available</dd>
+        </div>
+        <div class="metadata-row">
+          <dt>Dimensions</dt>
+          <dd id="dimensions">Not available</dd>
+        </div>
+        <div class="metadata-row">
+          <dt>File size</dt>
+          <dd id="size">Not available</dd>
+        </div>
       </dl>
     </section>
-    <a href="upload.html" class="mt-7 inline-block rounded-lg bg-violet-300 px-5 py-3 font-semibold text-zinc-950">Validate another image</a>
+    <a class="button button--quiet result-again" href="upload.html">Validate another image</a>
   </main>
 <script>
 (() => {
@@ -35,14 +60,20 @@
     const raw = sessionStorage.getItem('truthlensResult');
     if (!raw) return;
     const result = JSON.parse(raw);
-    document.getElementById('verdict').textContent = result.verdict || 'Inconclusive';
-    document.getElementById('message').textContent = result.message || 'No validated detector response was provided.';
-    const meta = result.metadata || {};
-    document.getElementById('format').textContent = meta.format || '—';
-    document.getElementById('dimensions').textContent = meta.width && meta.height ? meta.width + ' × ' + meta.height : '—';
-    document.getElementById('size').textContent = typeof meta.file_size_kb === 'number' ? meta.file_size_kb + ' KB' : '—';
     const checks = result.checks || {};
-    document.getElementById('detection').textContent = checks.ai_image_detection === 'not_configured' ? 'Not configured' : (checks.ai_image_detection || 'Unknown');
+    const detectionAvailable = ['model_estimate', 'validated'].includes(checks.ai_image_detection);
+    document.getElementById('verdict').textContent = detectionAvailable
+      ? (result.verdict || 'Inconclusive')
+      : 'Inconclusive: detector not configured';
+    document.getElementById('message').textContent = detectionAvailable
+      ? (result.message || 'No detector response message was provided.')
+      : 'Install and enable the local Smaug detector to get an AI-generated or likely-real estimate.';
+    const meta = result.metadata || {};
+    document.getElementById('format').textContent = meta.format || 'Not available';
+    document.getElementById('dimensions').textContent = meta.width && meta.height ? meta.width + ' × ' + meta.height : 'Not available';
+    document.getElementById('size').textContent = typeof meta.file_size_kb === 'number' ? meta.file_size_kb + ' KB' : 'Not available';
+    document.getElementById('detection').textContent = checks.ai_image_detection === 'model_estimate' ? (result.detector || 'Model estimate') : (checks.ai_image_detection === 'not_configured' ? 'Not configured' : (checks.ai_image_detection || 'Unknown'));
+    document.getElementById('probability').textContent = typeof result.probability_ai === 'number' ? (result.probability_ai * 100).toFixed(1) + '% (model score)' : 'Not available';
   } catch (_) {
     document.getElementById('message').textContent = 'The saved validation response could not be read. Please upload the image again.';
   }
